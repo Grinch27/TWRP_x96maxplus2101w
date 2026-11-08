@@ -66,10 +66,6 @@ jobs:
       fail-fast: false
       matrix:
         entry: [2101w-slimbox-aosp, 2101w-slimbox-atv]
-    if: >-
-      github.event_name == 'push' ||
-      inputs.firmware == 'both' ||
-      inputs.firmware == matrix.entry
     env:
       ROM_ENTRY: ${{ matrix.entry }}
       ROM_DIR: ${{ runner.temp }}/thirdparty-${{ matrix.entry }}-${{ github.run_id }}
@@ -86,11 +82,12 @@ jobs:
             sudo apt-get install -y --no-install-recommends p7zip-full
           fi
       - name: Download, verify and classify non-stock ROM
+        if: github.event_name == 'push' || inputs.firmware == 'both' || inputs.firmware == matrix.entry
         run: |
           set -euo pipefail
           python3 scripts/stock_rom.py "${ROM_ENTRY}" "${ROM_DIR}" --require-class third_party_slimbox
       - name: Create only Third-party Release after validation
-        if: github.event_name == 'push' || inputs.publish == true
+        if: (github.event_name == 'push' || inputs.publish == true) && (github.event_name == 'push' || inputs.firmware == 'both' || inputs.firmware == matrix.entry)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -104,7 +101,7 @@ jobs:
           gh release edit "${tag}" --draft=false --prerelease --latest=false
           printf '[Third-party Release](https://github.com/%s/releases/tag/%s)\n' "${GH_REPO}" "${tag}" >> "${GITHUB_STEP_SUMMARY}"
       - name: Report validated dry run
-        if: github.event_name == 'workflow_dispatch' && inputs.publish == false
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == false && (inputs.firmware == 'both' || inputs.firmware == matrix.entry)
         run: |
           set -euo pipefail
           printf 'Validated source without public publication: %s\n' "${ROM_ENTRY}" >> "${GITHUB_STEP_SUMMARY}"
