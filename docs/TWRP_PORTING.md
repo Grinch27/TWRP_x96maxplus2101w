@@ -13,11 +13,11 @@ This is a **candidate TWRP 9.0 device tree**, not a tested Recovery image. The `
 - Both boot/recovery are Android Boot Header **v1**, **2048-byte** page size; load addresses kernel `0x01080000`, ramdisk `0x01000000`, second `0x00f00000`, tags `0x100`. Kernel payload: **9,947,616 bytes**. Recovery ramdisk: **6,687,486 bytes**, gzip/newc, 168 entries and `etc/recovery.fstab`; boot ramdisk is empty.
 - Amlogic v2 compressed Multi-DTB includes `g12a_u212_2g`, `g12a_u212_4g`, `sm1_ac213_2g` and **`sm1_ac213_4g`**. These are parsed with 32-bit word byte reversal per [U-Boot aml_dt.c](https://third-party-mirror.googlesource.com/u-boot/+/refs/heads/vim3/common/aml_dt.c); it is not yet proved that the user's actual device selects the last variant.
 - 2024 stock `recovery.fstab` mounts `/system` as `/` (system-as-root) and includes `/data ext4 encryptable=footer`. The latter is **not proof of working TWRP decryption**.
-- The v1 embedded Recovery DTBO section must be checked for exact size/offset and matched with `PARTITION/dtbo` before packaging; [Android boot image specification](https://source.android.com/docs/core/architecture/bootloader/boot-image-header).
+- [Run #42471929004](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42471929004) **verified** Android v1 Recovery DTBO size **438 B** at offset **16,726,016 B**, matching exactly the stock `PARTITION/dtbo` bytes; original kernel and second stage were also byte-compared. [Android boot image specification](https://source.android.com/docs/core/architecture/bootloader/boot-image-header).
 
 ## Source layout
 
-- `BoardConfig.mk`: proposed SM1 board, original boot header and load addresses; 32-bit recovery ABI and 16 MiB partition-size ceiling are **provisional**.
+- `BoardConfig.mk`: proposed SM1 board, original boot header and load addresses; 32-bit recovery ABI matches the stock ARM executable set, but the 16 MiB partition-size ceiling is **provisional**.
 - `AndroidProducts.mk`, `omni_x96maxplus2101w.mk`: TWRP 9.0 Omni product declaration.
 - `recovery/root/etc/recovery.fstab`: original vendor recovery mount table for offline comparison (comments added).
 - `recovery/root/etc/twrp.fstab`: restricted TWRP-compatible mount candidates. Dangerous bootloader, tee, metadata, param writes are intentionally excluded; removable storage aliases not yet mapped.
@@ -31,9 +31,9 @@ The source repository intentionally excludes proprietary kernel/bootloader binar
 
 | Priority | Check | Acceptance evidence |
 | --- | --- | --- |
-| P0 | `recovery_dtbo_size`, exact overlay bytes and original header v1 | V1 extraction equals original partition DTBO |
+| PASS | `recovery_dtbo_size`, exact overlay bytes and original header v1 | Run #42471929004: 438 B at 16,726,016 and byte-equal to original partition |
 | P0 | Actual `recovery` partition size | Stock partition table or `/proc/partitions`; no guessed ceiling in a final release |
-| P0 | Userspace ABI/Android branch selection | Stock Recovery ELF interpreter/architecture and executable dependencies |
+| PARTIAL | Userspace ABI/Android branch selection | [Run #42472155912](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42472155912): stock `init`, `adbd`, `recovery` ELF32 ARM, but `sbin/remotecfg` ELF64 AArch64; dependency/loading support unverified |
 | P0 | Proper ramdisk source, init/ueventd and Amlogic USB gadget | Full stock ramdisk inventory with no missing required binaries/modules |
 | P0 | Kernel, second, DTBO provenance | Exact byte equivalence to archived original, correct board variant |
 | P1 | 2024 ROM filesystem/partition properties | Read-only sparse image inspection; mount topology/fstab reconciled |
@@ -50,8 +50,8 @@ The source repository intentionally excludes proprietary kernel/bootloader binar
 
 ## Next engineering steps
 
-1. Finish real recovery v1 DTBO extraction and prepare matching temporary prebuilts.
-2. Validate original Recovery userspace ELF ABI and init files; decide the supported TWRP/Omni branch.
+1. Completed: verified v1 DTBO and staged matching kernel/second/DTBO prebuilts in [run #42471929004](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42471929004).
+2. Audit stock init and userspace ELF dependencies (especially 64-bit `remotecfg`), then pin the supported TWRP/Omni branch.
 3. Review Amlogic SM1 board DTB, partition sizes, USB/HDMI input and UI framebuffer dependencies.
 4. Compile a non-release TWRP candidate and compare its header, second/DTBO, partition size and component manifests against stock.
 5. Only consider on-device read-only boot checks after a new explicit approval gate.
