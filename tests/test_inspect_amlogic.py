@@ -17,7 +17,7 @@ aml = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(aml)
 
 
-def build_fixture(path: Path, version=2, duplicate=False, overlap=False, bad_name=False):
+def build_fixture(path: Path, version=2, duplicate=False, overlap=False, alias=False, bad_name=False):
     rec = aml.ITEM_FORMATS[version]
     header_size = 64 + 2 * rec.size
     data_a = b"ANDROID!" + bytes(4096 - 8)
@@ -32,7 +32,7 @@ def build_fixture(path: Path, version=2, duplicate=False, overlap=False, bad_nam
     item_a = rec.pack(0, 0, 0, header_size, len(data_a),
                       name("PARTITION", width), name(sub_a, width), bytes(32))
     item_b = rec.pack(1, 0, 0,
-                      header_size if overlap else header_size + len(data_a),
+                      (header_size + 10 if overlap else header_size if alias else header_size + len(data_a)),
                       len(data_b), name("PARTITION", width), name(sub_b, width),
                       bytes(32))
     path.write_bytes(header + item_a + item_b + data_a + data_b)
@@ -66,6 +66,15 @@ class InspectorTest(unittest.TestCase):
             build_fixture(rom, overlap=True)
             with self.assertRaisesRegex(ValueError, "Overlapping"):
                 aml.inventory(rom)
+
+    def test_exact_shared_span_is_valid(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            rom = root / "rom.img"
+            build_fixture(rom, alias=True)
+            rows = aml.inventory(rom)
+            self.assertEqual(rows[0]["offset"], rows[1]["offset"])
+            self.assertEqual(rows[0]["length"], rows[1]["length"])
 
     def test_unsafe_item_name(self):
         with tempfile.TemporaryDirectory() as folder:
