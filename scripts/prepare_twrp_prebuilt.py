@@ -21,7 +21,7 @@ import shutil
 import sys
 from pathlib import Path
 
-SOURCE_RUN = "42471323150"
+# The inspection run ID is recorded by the workflow, not hard-coded.
 SOURCE_RELEASE = "firmware-2101w-stock-20240508-42466511950-1"
 MAX_BYTES = {"kernel": 64 * 1024 * 1024, "second": 2 * 1024 * 1024,
              "dtbo.img": 1024 * 1024}
@@ -36,7 +36,7 @@ def require(path: Path, length: int) -> bytes:
     return path.read_bytes()
 
 
-def prepare(source: Path, output: Path) -> dict:
+def prepare(source: Path, output: Path, inspection_run: str) -> dict:
     meta_path = source / "boot-metadata" / "boot-analysis.json"
     items_path = source / "rom-inventory.json"
     if not meta_path.is_file() or not items_path.is_file():
@@ -101,7 +101,7 @@ def prepare(source: Path, output: Path) -> dict:
         target.write_bytes(payload)
     report = {
         "source_release": SOURCE_RELEASE,
-        "source_inspection_run": SOURCE_RUN,
+        "source_inspection_run": inspection_run,
         "boot_header_version": 1,
         "board_candidate": "_".join(KNOWN_BOARD),
         "recovery_partition_size": "NOT VERIFIED",
@@ -119,11 +119,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("inspection_artifact_dir", type=Path)
     parser.add_argument("prebuilt_output_dir", type=Path)
+    parser.add_argument("--inspection-run", required=True)
     args = parser.parse_args()
     try:
         print(json.dumps(prepare(
             args.inspection_artifact_dir.resolve(),
-            args.prebuilt_output_dir.resolve()
+            args.prebuilt_output_dir.resolve(), args.inspection_run
         ), indent=2))
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(f"Refusing to prepare TWRP prebuilts: {exc}", file=sys.stderr)
