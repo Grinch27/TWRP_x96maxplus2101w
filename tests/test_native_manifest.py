@@ -34,6 +34,7 @@ REQUIRED = {
     "frameworks/ml",
     "external/libdivsufsort",
     "external/fonttools",
+    "external/flatbuffers", "external/gemmlowp",
 }
 
 
