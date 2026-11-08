@@ -44,4 +44,30 @@
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/hamcrest" path="external/hamcrest" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libvpx" path="external/libvpx" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/jacoco" path="external/jacoco" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libopus" path="external/libopus" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libhevc" path="external/libhevc" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/jsr305" path="external/jsr305" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/giflib" path="external/giflib" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/sqlite" path="external/sqlite" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libjpeg-turbo" path="external/libjpeg-turbo" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/harfbuzz_ng" path="external/harfbuzz_ng" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/pdfium" path="external/pdfium" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/frameworks/minikin" path="frameworks/minikin" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/prebuilts/gradle-plugin" path="prebuilts/gradle-plugin" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/development" path="development" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
 </manifest>
