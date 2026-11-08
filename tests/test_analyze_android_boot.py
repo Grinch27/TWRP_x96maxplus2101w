@@ -81,6 +81,33 @@ class BootAnalysisTests(unittest.TestCase):
             self.assertEqual(report["entries"][0]["tokens"], ["sm1", "ac213", "4g"])
             self.assertEqual((root / "out/board-0.dtb").read_bytes(), fdt)
 
+    def test_android_v1_recovery_dtbo_section(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            recovery = root / "recovery.img"
+            kernel = b"K" * 3
+            ramdisk = b"R" * 3
+            second = b"S" * 3
+            overlay = b"DTBO"
+            page = 2048
+            dtbo_offset = page * 4
+            header = bytearray(page)
+            header[:8] = b"ANDROID!"
+            struct.pack_into("<10I", header, 8, len(kernel), 0x1080000,
+                             len(ramdisk), 0x1000000, len(second), 0xf00000,
+                             0x100, page, 1, 0)
+            struct.pack_into("<IQI", header, 1632, len(overlay), dtbo_offset, 1648)
+            recovery.write_bytes(
+                bytes(header) + kernel.ljust(page, b"\0") +
+                ramdisk.ljust(page, b"\0") +
+                second.ljust(page, b"\0") +
+                overlay.ljust(page, b"\0")
+            )
+            result = mod.probe_android_boot(recovery, root / "out")
+            self.assertEqual(result["recovery_dtbo_bytes"], len(overlay))
+            self.assertEqual(result["recovery_dtbo_offset"], dtbo_offset)
+            self.assertEqual((root / "out/recovery_dtbo.img").read_bytes(), overlay)
+
     def test_android_dtbo_header(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
