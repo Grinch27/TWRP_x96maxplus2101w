@@ -58,3 +58,11 @@ Stop if any of: model/PCB revision mismatches, uncertain bootloader/Recovery par
 - **Confirmed:** 2024 full factory package archived; correct Android recovery boot layout and stock-derived binary inputs extracted in prior GitHub Actions; sources of a firsthand 2101W USB burn procedure identified.
 - **Unknown:** native TWRP boot, actual-user-box U-Boot/DTB selection, USB mouse/keyboard functionality, HDMI display, TWRP storage mounts, bootloader unlock/fastboot support and 2101W-specific temporary external Recovery loading.
 - **Not performed:** actual 2101W connection, flashing, bootloader unlocking, shorting, erase, Recovery partition writes or real hardware boot tests.
+
+## Further evidence: Amlogic ROM USB identity and 2101 bootloader differences
+
+- [Official U-Boot Amlogic boot-flow documentation](https://docs.u-boot-project.org/en/stable/board/amlogic/boot-flow.html) identifies Amlogic mask-ROM USB gadget as **USB VID:PID `1b8e:c003`**. A host-side `lsusb -d 1b8e:c003` query is a **read-only enumeration check** once the user separately authorizes physical connection. Device enumeration alone is **not proof of flash compatibility**.
+- [ophub/amlogic-s9xxx-armbian Issue #2317](https://github.com/ophub/amlogic-s9xxx-armbian/issues/2317) documents a **2101 (not 2101W)** with `am1_ac213_4g` and failures booting external SD under some Android bootloaders. This supports **explicit bootloader provenance checking** before assuming an externally supplied `recovery.img` will load.
+- [CoreELEC forum rescue example](https://discourse.coreelec.org/t/how-to-recover-a-bricked-x96-max-using-linux/12494) describes constructing a separate SD rescue medium from a **device-matching full Android package**. This is an X96 Max family example, **not tested on the target 2101W**; it must not be used to write any card/box in the current work phase.
+
+**Priority:** obtain a working, capacity-validated TWRP Recovery artifact first; subsequently check the target bootloader's external Recovery boot support **without writes**. Use ROM-mode USB detection and whole-firmware restoration as a recovery plan only after explicit approvals.
