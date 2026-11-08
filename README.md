@@ -35,3 +35,9 @@ This repository now contains an **initial TWRP 9.0 Omni recovery device-tree por
 - [Device-tree offline verification workflow](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/workflows/device_tree_verify.yml) and [original ROM extraction workflow](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/workflows/inspect_stock.yml).
 - [Validated stock-derived TWRP prebuilts (7-day Artifact)](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42471929004/artifacts/13614290005); production builds should regenerate the inputs from the pinned original ROM.
 - **Remaining gates:** real Recovery partition capacity, Amlogic init/USB/remote control dependencies, Android build selection, system-as-root mapping, userdata encryption, first successful TWRP build and eventual independently approved device tests.
+
+## 2101W flashing and recovery research
+
+See [**2101W flashing research and approval gates**](docs/FLASHING_RESEARCH_2101W.md). It distinguishes the complete Amlogic USB Burning Tool factory package from a single-partition TWRP `recovery.img` and cites a **firsthand 2101W USB 3.0/AV-reset** report.
+
+**No TWRP device flashing is authorized.** The current Native Android 9 workflow is non-publishing and uploads a short-lived candidate only after a genuine build and bytewise stock component validation. Other variants' `u212`, `Plus2`, `2101` or `Q1` TWRP files are not considered compatible with the 2101W.
