@@ -313,6 +313,21 @@ def main() -> int:
                       if "fstab" in a["name"]],
         } for name, x in report.items()}
         print(json.dumps(overview, ensure_ascii=False))
+        for partition in ("boot", "recovery"):
+            if partition in report:
+                config = report[partition]
+                print("BOOT PARAMS", partition, json.dumps({
+                    key: config[key] for key in (
+                        "header_version", "page_size", "kernel_load_addr",
+                        "ramdisk_load_addr", "second_load_addr",
+                        "second_bytes", "tags_addr", "cmdline"
+                    )
+                }, ensure_ascii=False))
+        recovery = a.output / "recovery" / "ramdisk-files" / "etc" / "recovery.fstab"
+        if recovery.exists():
+            print("STOCK RECOVERY FSTAB BEGIN")
+            print(recovery.read_text(encoding="utf-8", errors="replace")[:32768])
+            print("STOCK RECOVERY FSTAB END")
         for name in ("_aml_dtb", "meson1", "recovery_second"):
             if name in report:
                 print(f"DTB {name}: {json.dumps(report[name], ensure_ascii=False)}")
