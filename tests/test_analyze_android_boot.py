@@ -61,6 +61,22 @@ class BootAnalysisTests(unittest.TestCase):
                 b"/data ext4 /dev/block/by-name/data\n"
             )
 
+    def test_stock_elf_architecture_probe(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            elf = bytearray(20)
+            elf[:4] = b"\x7fELF"
+            elf[4] = 1
+            elf[5] = 1
+            struct.pack_into("<H", elf, 18, 40)
+            blob = cpio_item("sbin/recovery", bytes(elf)) + cpio_item("TRAILER!!!", b"")
+            source = root / "ramdisk.gz"
+            source.write_bytes(gzip.compress(blob))
+            data = mod.read_ramdisk(source, root / "out")
+            self.assertEqual(data["elf_binaries"], [
+                {"name": "sbin/recovery", "elf_class": "ELF32", "machine": "ARM"}
+            ])
+
     def test_reject_cpio_path_traversal(self):
         with self.assertRaisesRegex(ValueError, "Invalid cpio entry name"):
             mod.safe_ramdisk_names(make_cpio("../../escape"))
