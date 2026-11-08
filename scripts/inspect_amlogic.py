@@ -85,6 +85,11 @@ def inventory(image: Path) -> list[dict]:
         ordered = sorted(rows, key=lambda item: item["offset"])
         for previous, current in zip(ordered, ordered[1:]):
             if previous["offset"] + previous["length"] > current["offset"]:
+                # Vendor packages may alias exactly the same USB DDR/UBOOT bytes.
+                # Preserve both names, but reject any partial intersection.
+                if (previous["offset"] == current["offset"] and
+                        previous["length"] == current["length"]):
+                    continue
                 raise ValueError(
                     "Overlapping firmware payload items: "
                     f"{previous['main']}/{previous['sub']} "
