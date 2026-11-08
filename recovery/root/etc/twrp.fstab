@@ -1,0 +1,23 @@
+# X96 MAX+ 2101W early TWRP partition map; no hardware testing.
+# Requirements: mount only stock-proven 2024 partition names, explicit image backup.
+# Ambiguities: real /dev/block node availability, FDE footer and external storage.
+# Research: compare actual device /proc/partitions and stock fstab before use.
+# Risks: wiping metadata/tee/vbmeta/bootloader or wrong mount points is unsafe.
+# Verification: offline comparison then actual read-only recovery mount checks.
+# Format: mount_point filesystem block_device flags
+/boot emmc /dev/block/boot flags=backup=1;flashimg
+/recovery emmc /dev/block/recovery flags=backup=1;flashimg
+/logo emmc /dev/block/logo flags=backup=1;flashimg
+/vbmeta emmc /dev/block/vbmeta flags=backup=1;flashimg
+/misc emmc /dev/block/misc
+/system_root ext4 /dev/block/system flags=backup=1;display="System"
+/system_image emmc /dev/block/system flags=backup=1;flashimg
+/vendor ext4 /dev/block/vendor flags=backup=1
+/vendor_image emmc /dev/block/vendor flags=backup=1;flashimg
+/odm ext4 /dev/block/odm flags=backup=1
+/product ext4 /dev/block/product flags=backup=1
+/cache ext4 /dev/block/cache flags=backup=1
+/data ext4 /dev/block/data flags=backup=1;encryptable=footer
+
+# Do not allow writes to /bootloader, /tee, /metadata or /param by default.
+# Removable storage node mapping remains unverified, so no invented entries.
