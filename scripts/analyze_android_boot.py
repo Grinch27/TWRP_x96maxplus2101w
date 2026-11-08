@@ -217,6 +217,60 @@ def probe_dtbo(path: Path, output: Path) -> dict:
             "version": version, "entries": entries}
 
 
+def parse_amlogic_dtb(path: Path, output: Path) -> dict:
+    """Extract only well-bounded Amlogic single/multi FDT records."""
+    output.mkdir(parents=True, exist_ok=True)
+    blob = path.read_bytes()
+    if len(blob) > MAX_COMPONENT:
+        raise ValueError("Device tree source exceeds budget")
+    compressed = blob.startswith(b"\x1f\x8b")
+    if compressed:
+        obj = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        blob = obj.decompress(blob, MAX_COMPONENT + 1)
+        if len(blob) > MAX_COMPONENT or not obj.eof or obj.unconsumed_tail:
+            raise ValueError("Incomplete compressed device tree")
+    def save(blob_data: bytes, name: str) -> dict:
+        if not blob_data.startswith(b"\xd0\x0d\xfe\xed") or len(blob_data) < 40:
+            raise ValueError("Invalid flattened device tree magic")
+        length = struct.unpack_from(">I", blob_data, 4)[0]
+        if length < 40 or length > len(blob_data):
+            raise ValueError("FDT declared size out of bounds")
+        (output / name).write_bytes(blob_data[:length])
+        return {"file": name, "bytes": length}
+    if blob.startswith(b"\xd0\x0d\xfe\xed"):
+        return {"kind": "single", "gzip": compressed,
+                "entries": [save(blob, "single.dtb")]}
+    if not blob.startswith(b"AML_"):
+        return {"kind": "unknown", "gzip": compressed, "magic": blob[:8].hex()}
+    if len(blob) < 12:
+        raise ValueError("Short Amlogic multi-DTB header")
+    version, count = struct.unpack_from("<II", blob, 4)
+    if version not in (1, 2) or not 1 <= count <= 64:
+        raise ValueError("Unexpected Amlogic multi-DTB version or count")
+    token_length = 4 if version == 1 else 16
+    record_size = 3 * token_length + 8
+    if 12 + count * record_size > len(blob):
+        raise ValueError("Amlogic multi-DTB table is truncated")
+    items = []
+    for i in range(count):
+        start = 12 + i * record_size
+        fields = [
+            blob[start + n * token_length:start + (n + 1) * token_length]
+            for n in range(3)
+        ]
+        offset, size = struct.unpack_from("<II", blob, start + 3 * token_length)
+        if not size or offset < 12 + count * record_size or offset + size > len(blob):
+            raise ValueError("Amlogic DTB item out of bounds")
+        tokens = [
+            v.split(b"\0", 1)[0].decode("ascii", errors="replace")
+            for v in fields
+        ]
+        saved = save(blob[offset:offset + size], f"board-{i}.dtb")
+        items.append({"index": i, "tokens": tokens, **saved})
+    return {"kind": "amlogic-multi", "gzip": compressed, "version": version,
+            "entries": items}
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("directory", type=Path)
@@ -232,6 +286,17 @@ def main() -> int:
         dtbo = a.directory / "dtbo.img"
         if dtbo.exists():
             report["dtbo"] = probe_dtbo(dtbo, a.output / "dtbo")
+        for source_name in ("_aml_dtb", "meson1"):
+            dtb_source = a.directory / f"{source_name}.img"
+            if dtb_source.exists():
+                report[source_name] = parse_amlogic_dtb(
+                    dtb_source, a.output / source_name
+                )
+        recovery_second = a.output / "recovery" / "second"
+        if recovery_second.exists():
+            report["recovery_second"] = parse_amlogic_dtb(
+                recovery_second, a.output / "recovery" / "second-dtb"
+            )
         (a.output / "boot-analysis.json").write_text(
             json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
@@ -246,6 +311,9 @@ def main() -> int:
                       if "fstab" in a["name"]],
         } for name, x in report.items()}
         print(json.dumps(overview, ensure_ascii=False))
+        for name in ("_aml_dtb", "meson1", "recovery_second"):
+            if name in report:
+                print(f"DTB {name}: {json.dumps(report[name], ensure_ascii=False)}")
     except (ValueError, OSError, UnicodeError) as exc:
         print(f"Android boot inspection failed: {exc}", file=sys.stderr)
         return 1
