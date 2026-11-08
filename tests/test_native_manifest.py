@@ -33,6 +33,7 @@ REQUIRED = {
     "external/antlr", "external/webp", "system/bt",
     "frameworks/ml",
     "external/libdivsufsort",
+    "external/fonttools",
 }
 
 

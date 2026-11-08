@@ -98,4 +98,6 @@
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/libdivsufsort" path="external/libdivsufsort" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/fonttools" path="external/fonttools" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
 </manifest>
