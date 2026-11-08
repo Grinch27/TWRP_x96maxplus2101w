@@ -1,0 +1,117 @@
+# Requirements: run a real TWRP 9.0 Native recovery build on the pinned
+# 2024 X96 MAX+ 2101W factory kernel, second-stage and DTBO, with NO Release.
+# Ambiguities: real recovery partition size, physical USB HID/HDMI support,
+# Amlogic init/AVB integration and encryption are not proven by compilation.
+# Research: use minimal-manifest-twrp/Omni twrp-9.0, not u212/G12A binaries.
+# Optimization: shallow repo sync, bounded -j2 compilation, 14 GiB disk gates.
+# Risks: Python2 EOL, old 9.0 dependencies on Ubuntu, disk/network exhaustion.
+# Verification: offline regression -> real repo sync -> make recoveryimage ->
+# exact stock-prebuilt checks -> at most one 3-day non-Release Artifact.
+name: X96 2101W TWRP 9.0 Native (non-release)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/twrp_native.yml'
+      - 'scripts/build_twrp_native.sh'
+      - 'scripts/validate_native_recovery.py'
+      - 'BoardConfig.mk'
+      - 'omni_x96maxplus2101w.mk'
+      - 'AndroidProducts.mk'
+      - 'Android.mk'
+      - 'recovery/root/etc/twrp.fstab'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: twrp-9-native-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  runner-image:
+    name: Resolve public hosted image and validate tree
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve reference runner image
+        uses: Grinch27/github-actions/.github/actions/resolve-runner-image@main
+      - name: Checkout tree
+        uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Run complete offline regression
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m py_compile scripts/*.py
+          bash -n scripts/build_twrp_native.sh
+
+  native:
+    name: Real Android 9 TWRP recoveryimage (no release)
+    needs: runner-image
+    # Ubuntu 22.04 is deliberate for this legacy Android 9 source:
+    # newest dynamically resolved runner images are not known compatible.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 340
+    permissions:
+      contents: read
+    env:
+      GH_PROMPT_DISABLED: '1'
+      DEBIAN_FRONTEND: noninteractive
+      MAKEFLAGS: '-j2'
+      USE_CCACHE: '0'
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Install Java 8 for Omni Android 9
+        uses: actions/setup-java@main
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install native Android compilation prerequisites
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential curl flex g++-multilib gcc-multilib \
+            gperf git lib32z1-dev libbz2-dev liblz4-tool libncurses-dev \
+            libssl-dev libxml2-utils lzop rsync unzip wget zip zlib1g-dev
+          df -h
+      - name: Retrieve pinned stock ROM and stage proven boot inputs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/build_twrp_native.sh prepare
+      - name: Prepare legacy Python2 tooling without changing host Python3
+        run: bash scripts/build_twrp_native.sh toolchain
+      - name: Shallow sync actual twrp-9.0 Omni source
+        timeout-minutes: 150
+        run: bash scripts/build_twrp_native.sh sync
+      - name: Build real TWRP 9.0 native recovery image
+        timeout-minutes: 150
+        run: bash scripts/build_twrp_native.sh build
+      - name: Retain statically validated candidate for 3 days (no Release)
+        uses: actions/upload-artifact@main
+        with:
+          name: x96-2101w-twrp9-unflashed-candidate-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/twrp9-native/src/out/target/product/x96maxplus2101w/recovery.img
+            ${{ runner.temp }}/twrp9-native/validation/static-validation.json
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
+      - name: Record non-release boundary
+        run: |
+          set -euo pipefail
+          printf '%s\n' \
+            'TWRP candidate compiled and passed offline static checks.' \
+            'No GitHub Release was created. Artifact lifetime: 3 days.' \
+            'USB keyboard/mouse (evdev) source paths verified, runtime not tested.' \
+            'No device connection, flash, AVB modification or boot validation.' \
+            >> "${GITHUB_STEP_SUMMARY}"
