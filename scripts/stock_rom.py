@@ -178,6 +178,14 @@ def fetch_with_resume(share: str, path: str, length: int, destination: Path) -> 
             if partial.stat().st_size == length:
                 partial.replace(destination)
                 return
+        except urllib.error.HTTPError as exc:
+            # Numeric status only: signed URLs and server bodies may contain secrets.
+            print(f"Download attempt {attempt + 1} rejected with HTTP {exc.code}", flush=True)
+            if exc.code in (400, 401, 403, 404, 410, 416):
+                raise ValueError(
+                    f"Upstream denied the download with HTTP {exc.code}; "
+                    "do not publish or retry without a new verified source"
+                ) from exc
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             print(f"Download attempt {attempt + 1} interrupted: {type(exc).__name__}", flush=True)
         if attempt != 11:
