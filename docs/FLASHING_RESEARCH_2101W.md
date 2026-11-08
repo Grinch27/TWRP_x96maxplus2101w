@@ -66,3 +66,11 @@ Stop if any of: model/PCB revision mismatches, uncertain bootloader/Recovery par
 - [CoreELEC forum rescue example](https://discourse.coreelec.org/t/how-to-recover-a-bricked-x96-max-using-linux/12494) describes constructing a separate SD rescue medium from a **device-matching full Android package**. This is an X96 Max family example, **not tested on the target 2101W**; it must not be used to write any card/box in the current work phase.
 
 **Priority:** obtain a working, capacity-validated TWRP Recovery artifact first; subsequently check the target bootloader's external Recovery boot support **without writes**. Use ROM-mode USB detection and whole-firmware restoration as a recovery plan only after explicit approvals.
+
+## Additional 2101W firsthand claims (4PDA, not a reusable image)
+
+The [March 2023 4PDA discussion by ak156](https://4pda.to/forum/index.php?showtopic=1013103&st=10760) explicitly identifies a **X96 MAX+ 2101W** and mentions using TWRP to back up the `DATA` partition. However, that forum snippet does not identify the exact 2101W-compatible TWRP image, its boot header, author, binary digest or whether it can boot without writing the Recovery partition. It is **evidence that TWRP was discussed on a real 2101W**, not validation of the present `sm1_ac213_4g` port.
+
+The [X96MAX+ TWRP 3.3.1 ZNDS writeup](https://www.znds.com/tv-1172561-1-1.html) calls its image `x96MAX_Plus2_TWRP331.img` and uses a privileged `AmlogicFlasher.apk` write action. Despite its title, **Plus2 is not proven to match 2101W**; neither the provided Baidu links nor the APK install steps are an approved or safe alternative to an exact board-matched nonwriting test. Explicitly do **not** use that image or app on the current 2101W in this phase.
+
+The [ophub OpenWrt documentation](https://github.com/ophub/amlogic-s9xxx-openwrt/blob/main/documents/README.md) describes clearing the bootloader and motherboard testpoint shorting for certain X96 Max Plus rescue cases. These are **destructive, board-dependent operations**, not a default recipe for a 2101W with unknown PCB revision. In particular, a 2101W device with stock Android still functioning should not attempt the referenced short or `Erase bootloader` option.
