@@ -1,0 +1,110 @@
+# Requirements: archive original, unmodified slimBOXtv AOSP and ATV 9.20 for 2101W.
+# Ambiguity: upstream firmware content and exact board compatibility require verification.
+# Research: confirm release origin/permissions, 4GB/64GB flash compatibility and boot.
+# Optimization: separate matrix jobs, size-bounded transfers, independent releases.
+# Risks: republishing third-party firmware, expired provider links, 6-hour runner limit.
+# Verification: classify as third_party_slimbox; verify complete ZIP and Amlogic
+#     burning-image header before drafting and publishing a separate new Release.
+name: X96 MAX+ 2101W Third-party Firmware
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/thirdparty_rom.yml']
+  workflow_dispatch:
+    inputs:
+      firmware:
+        description: 'Third-party firmware variant'
+        type: choice
+        required: true
+        default: both
+        options:
+          - both
+          - 2101w-slimbox-aosp
+          - 2101w-slimbox-atv
+      publish:
+        description: 'Publish new Releases after validation'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+concurrency:
+  group: x96-thirdparty-${{ github.run_id }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  runner-image:
+    runs-on: ubuntu-latest
+    outputs:
+      RUNNER_IMAGE: ${{ steps.resolve.outputs.RUNNER_IMAGE }}
+    steps:
+      - name: Resolve runner image
+        id: resolve
+        uses: Grinch27/github-actions/.github/actions/resolve-runner-image@main
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Validate source rules
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_stock_rom*.py' -v
+          python3 -m py_compile scripts/stock_rom.py
+
+  third-party:
+    name: Download, validate and publish ${{ matrix.entry }}
+    needs: runner-image
+    runs-on: ${{ needs.runner-image.outputs.RUNNER_IMAGE }}
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [2101w-slimbox-aosp, 2101w-slimbox-atv]
+    if: >-
+      github.event_name == 'push' ||
+      inputs.firmware == 'both' ||
+      inputs.firmware == matrix.entry
+    env:
+      ROM_ENTRY: ${{ matrix.entry }}
+      ROM_DIR: ${{ runner.temp }}/thirdparty-${{ matrix.entry }}-${{ github.run_id }}
+      GH_PROMPT_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Provide 7z extractor
+        run: |
+          set -euo pipefail
+          if ! command -v 7z >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends p7zip-full
+          fi
+      - name: Download, verify and classify non-stock ROM
+        run: |
+          set -euo pipefail
+          python3 scripts/stock_rom.py "${ROM_ENTRY}" "${ROM_DIR}" --require-class third_party_slimbox
+      - name: Create only Third-party Release after validation
+        if: github.event_name == 'push' || inputs.publish == true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="thirdparty-slimbox-${ROM_ENTRY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "${tag}" --target "${GITHUB_SHA}" \
+            --title "THIRD-PARTY slimBOXtv (NOT STOCK) - ${ROM_ENTRY}" \
+            --notes-file "${ROM_DIR}/release-notes.md" --draft --prerelease --latest=false
+          gh release upload "${tag}" "${ROM_DIR}/assets/"*
+          gh release edit "${tag}" --draft=false --prerelease --latest=false
+          printf '[Third-party Release](https://github.com/%s/releases/tag/%s)\n' "${GH_REPO}" "${tag}" >> "${GITHUB_STEP_SUMMARY}"
+      - name: Report validated dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == false
+        run: |
+          set -euo pipefail
+          printf 'Validated source without public publication: %s\n' "${ROM_ENTRY}" >> "${GITHUB_STEP_SUMMARY}"
