@@ -188,6 +188,7 @@ def probe_android_boot(path: Path, output: Path) -> dict:
 
 
 def probe_dtbo(path: Path, output: Path) -> dict:
+    output.mkdir(parents=True, exist_ok=True)
     data = path.read_bytes()
     if len(data) < 32:
         raise ValueError("DTBO header too small")
