@@ -344,8 +344,12 @@ def stage_assets(source: Path, image: Path, destination: Path) -> dict:
     return manifest
 
 
-def prepare(entry: str, work_dir: Path) -> None:
+def prepare(entry: str, work_dir: Path, required_class: str | None = None) -> None:
     item = CATALOG[entry]
+    if required_class is not None and item["class"] != required_class:
+        raise ValueError(
+            "This workflow cannot publish another classification of firmware"
+        )
     if item["share"] is None:
         raise ValueError("Unverified 2022 source: no release will be published")
     if item["class"] == "other_board_stock":
@@ -409,9 +413,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("entry", choices=sorted(CATALOG))
     parser.add_argument("workdir", type=Path)
+    parser.add_argument(
+        "--require-class", choices=("stock_candidate", "third_party_slimbox")
+    )
     args = parser.parse_args()
     try:
-        prepare(args.entry, args.workdir.resolve())
+        prepare(args.entry, args.workdir.resolve(), args.require_class)
     except (ValueError, OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired,
             urllib.error.URLError, zipfile.BadZipFile) as exc:
         print(f"Firmware archive not publishable: {type(exc).__name__}: {exc}", file=sys.stderr)
