@@ -69,6 +69,7 @@ jobs:
 
   download-and-release:
     name: Preserve and publish validated firmware
+    if: github.event_name == 'workflow_dispatch'
     needs: runner-image
     runs-on: ${{ needs.runner-image.outputs.RUNNER_IMAGE }}
     timeout-minutes: 350
