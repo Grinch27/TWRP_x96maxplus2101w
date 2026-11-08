@@ -78,4 +78,14 @@
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/zopfli" path="external/zopfli" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/jsr330" path="external/jsr330" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/doclava" path="external/doclava" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libexif" path="external/libexif" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/piex" path="external/piex" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/test/vts" path="test/vts" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
 </manifest>

@@ -28,6 +28,8 @@ REQUIRED = {
     "development",
     "external/libyuv", "external/libavc", "external/jsilver",
     "external/zopfli",
+    "external/jsr330", "external/doclava", "external/libexif",
+    "external/piex", "test/vts",
 }
 
 
