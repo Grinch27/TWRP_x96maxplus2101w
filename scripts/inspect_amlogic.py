@@ -82,9 +82,16 @@ def inventory(image: Path) -> list[dict]:
                 "offset": offset,
                 "length": size,
             })
-        ordered = sorted(spans)
-        if any(a[1] > b[0] for a, b in zip(ordered, ordered[1:])):
-            raise ValueError("Overlapping firmware payload items")
+        ordered = sorted(rows, key=lambda item: item["offset"])
+        for previous, current in zip(ordered, ordered[1:]):
+            if previous["offset"] + previous["length"] > current["offset"]:
+                raise ValueError(
+                    "Overlapping firmware payload items: "
+                    f"{previous['main']}/{previous['sub']} "
+                    f"[{previous['offset']}, {previous['offset'] + previous['length']}) "
+                    f"and {current['main']}/{current['sub']} "
+                    f"[{current['offset']}, {current['offset'] + current['length']})"
+                )
         if len(set((x["main"], x["sub"]) for x in rows)) != len(rows):
             raise ValueError("Duplicate firmware item main/subtype")
     return rows
