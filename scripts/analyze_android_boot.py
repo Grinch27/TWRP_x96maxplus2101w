@@ -106,8 +106,24 @@ def read_ramdisk(input_path: Path, destination: Path) -> dict:
         return {"compression": "unknown", "magic": data[:8].hex(), "files": []}
     entries = safe_ramdisk_names(body)
     selected = []
+    elf_records = []
     for row in entries:
         n = row["name"]
+        if row["regular"] and row["size"] >= 20:
+            start = row["_content_start"]
+            elf_header = body[start:start + 20]
+            if elf_header[:4] == b"\x7fELF":
+                machine = struct.unpack_from(
+                    "<H" if elf_header[5] == 1 else ">H", elf_header, 18
+                )[0]
+                elf_records.append({
+                    "name": n, "elf_class": {1: "ELF32", 2: "ELF64"}.get(
+                        elf_header[4], "unknown"
+                    ),
+                    "machine": {
+                        40: "ARM", 183: "AArch64", 62: "x86_64", 3: "x86"
+                    }.get(machine, f"unknown-{machine}"),
+                })
         basename = n.rsplit("/", 1)[-1]
         keep = (
             basename.startswith("fstab.") or basename in (
@@ -133,6 +149,7 @@ def read_ramdisk(input_path: Path, destination: Path) -> dict:
     return {
         "compression": kind, "file_count": len(entries),
         "evidence": selected, "manifest": manifest,
+        "elf_binaries": elf_records,
     }
 
 
@@ -343,6 +360,12 @@ def main() -> int:
                         "recovery_dtbo_offset", "header_size", "tags_addr", "cmdline"
                     )
                 }, ensure_ascii=False))
+        for partition in ("boot", "recovery"):
+            if partition in report and "ramdisk_tree" in report[partition]:
+                print("RECOVERY RAMDISK ELF", partition, json.dumps(
+                    report[partition]["ramdisk_tree"].get("elf_binaries", []),
+                    ensure_ascii=False
+                ))
         recovery = a.output / "recovery" / "ramdisk-files" / "etc" / "recovery.fstab"
         if recovery.exists():
             print("STOCK RECOVERY FSTAB BEGIN")
