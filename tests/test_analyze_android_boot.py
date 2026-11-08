@@ -47,6 +47,7 @@ class BootAnalysisTests(unittest.TestCase):
             struct.pack_into("<10I", header, 8, len(kernel), 0x1080000,
                              len(ramdisk), 0x1000000, len(second), 0,
                              0x100, 2048, 1, 0)
+            struct.pack_into("<IQI", header, 1632, 0, 0, 1648)
             hdr = bytes(header)
             rom.write_bytes(hdr + kernel.ljust(2048, b"\0") +
                             ramdisk.ljust(2048, b"\0") +
