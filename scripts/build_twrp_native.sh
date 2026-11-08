@@ -78,7 +78,22 @@ sync_sources() {
   chmod +x "${WORK_ROOT}/bin/repo"
   ( cd "${SRC}"
     "${WORK_ROOT}/bin/repo" init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-9.0
+    # Minimal TWRP 9 manifest marks external/skia as pdk-only, so normal
+    # sync excludes the actual owner of the hwui-required skia_deps module.
+    # Re-declare ONLY this official Android 9 r47 project in the default
+    # group; do not create a dummy module or disable dependency checks.
+    mkdir -p .repo/local_manifests
+    cat > .repo/local_manifests/twrp9-skia.xml <<'XML'
+<manifest>
+  <remove-project name="platform/external/skia"/>
+  <project name="platform/external/skia" path="external/skia"
+           remote="aosp" revision="refs/tags/android-9.0.0_r47"
+           groups="default"/>
+</manifest>
+XML
     "${WORK_ROOT}/bin/repo" sync -j3 -c --no-tags --fail-fast
+    test -f external/skia/Android.bp
+    grep -Eq 'name: *"skia_deps"' external/skia/Android.bp
     test -f build/envsetup.sh
     test -f bootable/recovery/minuitwrp/events.cpp
     grep -q REL_X bootable/recovery/minuitwrp/events.cpp
