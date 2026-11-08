@@ -67,8 +67,8 @@ class BootAnalysisTests(unittest.TestCase):
     def test_amlogic_multi_dtb_extract(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            fdt = b"\\xd0\\x0d\\xfe\\xed" + struct.pack(">I", 40) + bytes(32)
-            tokens = b"sm1".ljust(16, b"\\0") + b"2101w".ljust(16, b"\\0") + b"1".ljust(16, b"\\0")
+            fdt = b"\xd0\x0d\xfe\xed" + struct.pack(">I", 40) + bytes(32)
+            tokens = b"sm1".ljust(16, b"\0") + b"2101w".ljust(16, b"\0") + b"1".ljust(16, b"\0")
             record = tokens + struct.pack("<II", 68, 40)
             image = root / "source.img"
             image.write_bytes(b"AML_" + struct.pack("<II", 2, 1) + record + fdt)
