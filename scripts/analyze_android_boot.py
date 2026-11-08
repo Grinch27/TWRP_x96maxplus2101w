@@ -152,6 +152,12 @@ def probe_android_boot(path: Path, output: Path) -> dict:
         command = (header[64:576].split(b"\0", 1)[0] +
                    header[608:1632].split(b"\0", 1)[0])
         cmdline = command.decode("utf-8", errors="replace")
+        # Header v1 extends the legacy 1632-byte header with recovery DTBO data.
+        recovery_dtbo_size, recovery_dtbo_offset, header_size = (
+            struct.unpack_from("<IQI", header, 1632) if version >= 1 else (0, 0, 1632)
+        )
+        if version >= 1 and header_size < 1648:
+            raise ValueError("Invalid Android v1 header size")
         cursor = page
         kernel_head = extract_bytes(source, cursor, kernel, output / "kernel", size)
         cursor += align(kernel, page)
@@ -162,6 +168,15 @@ def probe_android_boot(path: Path, output: Path) -> dict:
         second_head = b""
         if second:
             second_head = extract_bytes(source, cursor, second, output / "second", size)
+        cursor += align(second, page)
+        recovery_dtbo_magic = ""
+        if recovery_dtbo_size:
+            if recovery_dtbo_offset != cursor:
+                raise ValueError("Recovery DTBO offset differs from expected alignment")
+            recovery_dtbo_head = extract_bytes(
+                source, cursor, recovery_dtbo_size, output / "recovery_dtbo.img", size
+            )
+            recovery_dtbo_magic = recovery_dtbo_head[:16].hex()
     report = {
         "boot_size": size,
         "page_size": page,
@@ -178,6 +193,10 @@ def probe_android_boot(path: Path, output: Path) -> dict:
         "second_bytes": second,
         "second_load_addr": second_addr,
         "second_magic": second_head[:16].hex(),
+        "recovery_dtbo_bytes": recovery_dtbo_size,
+        "recovery_dtbo_offset": recovery_dtbo_offset,
+        "recovery_dtbo_magic": recovery_dtbo_magic,
+        "header_size": header_size,
         "tags_addr": tags_addr,
     }
     if ramdisk:
@@ -320,7 +339,8 @@ def main() -> int:
                     key: config[key] for key in (
                         "header_version", "page_size", "kernel_load_addr",
                         "ramdisk_load_addr", "second_load_addr",
-                        "second_bytes", "tags_addr", "cmdline"
+                        "second_bytes", "recovery_dtbo_bytes",
+                        "recovery_dtbo_offset", "header_size", "tags_addr", "cmdline"
                     )
                 }, ensure_ascii=False))
         recovery = a.output / "recovery" / "ramdisk-files" / "etc" / "recovery.fstab"
