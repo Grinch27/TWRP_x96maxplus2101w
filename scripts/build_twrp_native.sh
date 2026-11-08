@@ -91,8 +91,23 @@ sync_sources() {
 compile() {
   cd "${SRC}"
   # Do not use ALLOW_MISSING_DEPENDENCIES: missing modules must fail visibly.
+  # Legacy Android 9 envsetup/lunch relies on unset shell variables and
+  # benign probe failures. Suspend errexit/nounset ONLY for those two commands,
+  # check both return codes, then restore strict build execution.
+  set +e +u
   source build/envsetup.sh
+  local setup_rc=$?
+  if (( setup_rc != 0 )); then
+    printf 'Android 9 envsetup failed: rc=%s\n' "${setup_rc}" >&2
+    exit "${setup_rc}"
+  fi
   lunch "omni_${DEVICE}-eng"
+  local lunch_rc=$?
+  set -euo pipefail
+  if (( lunch_rc != 0 )); then
+    printf 'Android 9 lunch failed: rc=%s\n' "${lunch_rc}" >&2
+    exit "${lunch_rc}"
+  fi
   make -j2 recoveryimage
   local image="${SRC}/out/target/product/${DEVICE}/recovery.img"
   test -s "${image}"
