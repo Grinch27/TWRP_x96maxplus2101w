@@ -1,0 +1,85 @@
+# Requirements: inspect the already-published unmodified 2024 stock Amlogic .img.
+# Ambiguities: boot/recovery/DTB partition items are not yet inventoried.
+# Research: extract fstab, boot header and DTB before choosing BoardConfig flags.
+# Optimization: download once, parse table, extract only <=128 MiB allowlist.
+# Risks: corrupt firmware tables, proprietary bootloaders, unverified kernel ABI.
+# Verification: synthetic v1/v2 tests, real header/index extraction, human review.
+# This workflow never flashes, reuploads full stock or modifies stock releases.
+name: X96 2101W Stock ROM Offline Inspection
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/inspect_stock.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runner-image:
+    runs-on: ubuntu-latest
+    outputs:
+      RUNNER_IMAGE: ${{ steps.resolve.outputs.RUNNER_IMAGE }}
+    steps:
+      - name: Resolve runner image
+        id: resolve
+        uses: Grinch27/github-actions/.github/actions/resolve-runner-image@main
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Validate image parser
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_inspect_amlogic.py' -v
+          python3 -m py_compile scripts/inspect_amlogic.py
+
+  inspect:
+    name: Inspect 2024 factory package (read only)
+    needs: runner-image
+    runs-on: ${{ needs.runner-image.outputs.RUNNER_IMAGE }}
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_PROMPT_DISABLED: '1'
+      SOURCE_RELEASE: firmware-2101w-stock-20240508-42466511950-1
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Download source stock ROM image from previously published Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/stock" "${RUNNER_TEMP}/inspection"
+          gh release download "${SOURCE_RELEASE}" --pattern amlogic-factory-package.img --dir "${RUNNER_TEMP}/stock"
+          test -s "${RUNNER_TEMP}/stock/amlogic-factory-package.img"
+      - name: Parse Amlogic items and extract boot/DTB candidates
+        run: |
+          set -euo pipefail
+          python3 scripts/inspect_amlogic.py \
+            "${RUNNER_TEMP}/stock/amlogic-factory-package.img" \
+            "${RUNNER_TEMP}/inspection"
+          python3 - "${RUNNER_TEMP}/inspection/rom-inventory.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          a = json.loads(Path(sys.argv[1]).read_text())
+          with Path(__import__('os').environ['GITHUB_STEP_SUMMARY']).open('a') as out:
+              out.write('### Real stock firmware inventory\n\n')
+              out.write(f"Items: {len(a['items'])}; extracts: {len(a['extracted'])}\n\n")
+              for item in a['items']:
+                  out.write(f"- {item['main']}/{item['sub']}: {item['length']} bytes, type {item['type']}\n")
+              out.write("\nNot proof of device boot, recovery ABI, partition mountability, or FBE.\n")
+          PY
+      - name: Keep limited extracted evidence for device-tree investigation
+        uses: actions/upload-artifact@main
+        with:
+          name: x96-2101w-stock-offline-inspection-${{ github.run_id }}
+          path: ${{ runner.temp }}/inspection/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
