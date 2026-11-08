@@ -6,6 +6,8 @@
      Risks: extra source size and path conflict; fail on repo sync error.
      Verification: repo sync and actual Soong/Make build, without Release. -->
 <manifest>
+  <project name="platform/external/skia" path="external/skia" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/libphonenumber" path="external/libphonenumber" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/nist-sip" path="external/nist-sip" remote="aosp"
