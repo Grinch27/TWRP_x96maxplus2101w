@@ -99,3 +99,15 @@ Omni 的 `services.core.unboosted` 在 `frameworks/base/services/core/Android.bp
 | [#42485971042](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42485971042) | Source manifest now has 45 genuine AOSP 9 projects on top of the minimal tree | Outcome pending at time of documentation; consult the actual Run |
 
 **Hard acceptance:** this is not a successful Native TWRP build until `make recoveryimage` finishes, a real output `recovery.img` exists, original 2024 kernel/second/DTBO bytes are compared, and `validate_native_recovery.py` exits zero. The last three failed Soong runs produced **no validated recovery image**. Treat all flashing paths in [the 2101W research](FLASHING_RESEARCH_2101W.md) as gated and untested.
+
+## 2026-11-09 Native 构建迭代记录（仍然非发布）
+
+| Native Run | 核验结果 | 修正措施 |
+| --- | --- | --- |
+| [#42486990509](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42486990509) | Soong 依赖缺少 `flatbuffer_headers`、`gemmlowp_headers` | 提交 `76780bad`，增加 AOSP 9 `external/flatbuffers` 和 `external/gemmlowp` |
+| [#42533536454](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42533536454) | 原先 TensorFlow Lite 依赖通过；新的唯一 Soong 错误是 `libjavacore` 缺少 `libfdlibm` | 提交 `8836a363`，恢复真实 AOSP 9 `external/fdlibm` 项目 |
+| [#42534154872](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42534154872) | 以最新实际 Actions 日志为准，不能在完成前宣称成功 | 继续保持 3 天 Artifact、无 Release、无实机操作 |
+
+当前累计保留 **48 个**补充 AOSP 9 源码项目，由本仓库 `tests/test_native_manifest.py` 对路径集合、项目来源与版本进行一致性检查。持续将每次真实 Soong 错误与 `remove-minimal.xml` 对照；不得使用 `ALLOW_MISSING_DEPENDENCIES`、空模块或伪造系统二进制绕过依赖解析。
+
+**下一个关键验收点：** Soong build graph 能完整生成，随后才可能进行 Ninja/C++ 链接、Android Boot Image 打包及结构化静态验收。现有 16 MiB Recovery 容量仅是暂定上限，而非 64 GiB eMMC 上实际分区容量。
