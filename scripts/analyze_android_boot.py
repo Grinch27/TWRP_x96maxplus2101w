@@ -261,9 +261,11 @@ def parse_amlogic_dtb(path: Path, output: Path) -> dict:
         offset, size = struct.unpack_from("<II", blob, start + 3 * token_length)
         if not size or offset < 12 + count * record_size or offset + size > len(blob):
             raise ValueError("Amlogic DTB item out of bounds")
+        # U-Boot compares tokens as reversed 32-bit words (aml_dt.c).
         tokens = [
-            v.split(b"\0", 1)[0].decode("ascii", errors="replace")
-            for v in fields
+            b"".join(value[n:n + 4][::-1] for n in range(0, len(value), 4))
+            .replace(b"\0", b" ").decode("ascii", errors="replace").strip()
+            for value in fields
         ]
         saved = save(blob[offset:offset + size], f"board-{i}.dtb")
         items.append({"index": i, "tokens": tokens, **saved})
