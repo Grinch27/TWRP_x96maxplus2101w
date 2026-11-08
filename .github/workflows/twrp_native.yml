@@ -15,6 +15,8 @@ on:
     paths:
       - '.github/workflows/twrp_native.yml'
       - 'scripts/build_twrp_native.sh'
+      - 'build/manifests/twrp9-required.xml'
+      - 'tests/test_native_manifest.py'
       - 'scripts/validate_native_recovery.py'
       - 'BoardConfig.mk'
       - 'omni_x96maxplus2101w.mk'
