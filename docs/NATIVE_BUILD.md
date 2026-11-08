@@ -88,3 +88,14 @@ Omni 的 `services.core.unboosted` 在 `frameworks/base/services/core/Android.bp
 其余缺失库通过恢复**实际存在的 AOSP 9 项目**处理：包括 `external/libvpx`、`libopus`、`sqlite`、`libjpeg-turbo`、`harfbuzz_ng`、`pdfium`、`frameworks/minikin`、`prebuilts/gradle-plugin`、`development`。后续应审查这些项目的实际依赖是否仍能维持 Recovery 构建的最小化。
 
 **重要:** 即使 Soong/Kati/Native 完全成功，也必须额外验证 Recovery ramdisk 的真实 TWRP 可执行文件、fstab、USB 输入事件路径和原厂内核/DTBO 字节一致性。没有这些证据时不得把镜像标记为可实机刷写。
+
+## 2026-11-08 — Stock Recovery candidate builds continued
+
+| Run | Proven source/build stage | Outcome |
+| --- | --- | --- |
+| [#42484124760](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42484124760) | Genuine source sync and Soong bootstrap | Missing `jsr330`, `droiddoc-templates-sdk`, `VtsHalHidlTargetTestBase`, `libexif`, `libpiex`; five corresponding AOSP projects restored |
+| [#42484885259](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42484885259) | Genuine source sync and Soong bootstrap | Five previous errors resolved, then missing `antlr-runtime`, WebP decoder/encoder, Bluetooth type headers; three corresponding AOSP projects restored |
+| [#42485383670](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42485383670) | Genuine source sync and Soong bootstrap | Four previous errors resolved, then missing Neural Networks core/header modules; original `frameworks/ml` restored |
+| [#42485971042](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42485971042) | Source manifest now has 45 genuine AOSP 9 projects on top of the minimal tree | Outcome pending at time of documentation; consult the actual Run |
+
+**Hard acceptance:** this is not a successful Native TWRP build until `make recoveryimage` finishes, a real output `recovery.img` exists, original 2024 kernel/second/DTBO bytes are compared, and `validate_native_recovery.py` exits zero. The last three failed Soong runs produced **no validated recovery image**. Treat all flashing paths in [the 2101W research](FLASHING_RESEARCH_2101W.md) as gated and untested.
