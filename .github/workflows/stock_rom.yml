@@ -4,6 +4,7 @@
 # Optimization: resumable Yandex HTTP Range transfers and 1.9 GB Release asset splitting.
 # Risks: provider availability, upstream redistribution rights, wrong-board firmware,
 #        limited runner storage/time, unverified device compatibility.
+# Diagnostics: report HTTP code only; stop promptly on permanent upstream denial.
 # Verification: offline tests, provider metadata, archive CRC, Amlogic image header,
 #               completed draft upload before public Release; no flashing is performed.
 name: X96 MAX+ 2101W Stock ROM Archive
