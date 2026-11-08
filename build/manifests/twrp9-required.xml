@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Requirements: restore only projects supplying real Soong modules removed by
+     twrp-9.0 remove-minimal.xml; no placeholders or skipped dependencies.
+     Ambiguities: transitive modules may require further verified projects.
+     Research: compare with original AOSP android-9.0.0_r47 manifest.
+     Risks: extra source size and path conflict; fail on repo sync error.
+     Verification: repo sync and actual Soong/Make build, without Release. -->
+<manifest>
+  <project name="platform/external/libphonenumber" path="external/libphonenumber" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/nist-sip" path="external/nist-sip" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/tagsoup" path="external/tagsoup" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/sonivox" path="external/sonivox" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/jsmn" path="external/jsmn" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/curl" path="external/curl" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/tools/apksig" path="tools/apksig" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libmpeg2" path="external/libmpeg2" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/aac" path="external/aac" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/okhttp" path="external/okhttp" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/junit" path="external/junit" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libtextclassifier" path="external/libtextclassifier" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/libgsm" path="external/libgsm" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/guava" path="external/guava" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/jsoncpp" path="external/jsoncpp" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/tremolo" path="external/tremolo" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/prebuilts/tools" path="prebuilts/tools" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/hamcrest" path="external/hamcrest" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
+</manifest>
