@@ -85,7 +85,6 @@ sync_sources() {
     mkdir -p .repo/local_manifests
     cat > .repo/local_manifests/twrp9-skia.xml <<'XML'
 <manifest>
-  <remove-project name="platform/external/skia"/>
   <project name="platform/external/skia" path="external/skia"
            remote="aosp" revision="refs/tags/android-9.0.0_r47"
            groups="default"/>
