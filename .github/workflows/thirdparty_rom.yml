@@ -68,7 +68,7 @@ jobs:
         entry: [2101w-slimbox-aosp, 2101w-slimbox-atv]
     env:
       ROM_ENTRY: ${{ matrix.entry }}
-      ROM_DIR: ${{ runner.temp }}/thirdparty-${{ matrix.entry }}-${{ github.run_id }}
+      ROM_DIR: ${{ github.workspace }}/.thirdparty-${{ matrix.entry }}-${{ github.run_id }}
       GH_PROMPT_DISABLED: '1'
     steps:
       - uses: actions/checkout@main
