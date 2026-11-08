@@ -32,6 +32,7 @@ REQUIRED = {
     "external/piex", "test/vts",
     "external/antlr", "external/webp", "system/bt",
     "frameworks/ml",
+    "external/libdivsufsort",
 }
 
 
