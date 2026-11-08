@@ -68,13 +68,16 @@ class BootAnalysisTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             fdt = b"\xd0\x0d\xfe\xed" + struct.pack(">I", 40) + bytes(32)
-            tokens = b"sm1".ljust(16, b"\0") + b"2101w".ljust(16, b"\0") + b"1".ljust(16, b"\0")
+            def coded(token):
+                raw = token.encode().ljust(16, b" ")
+                return b"".join(raw[i:i + 4][::-1] for i in range(0, 16, 4))
+            tokens = coded("sm1") + coded("ac213") + coded("4g")
             record = tokens + struct.pack("<II", 68, 40)
             image = root / "source.img"
             image.write_bytes(b"AML_" + struct.pack("<II", 2, 1) + record + fdt)
             report = mod.parse_amlogic_dtb(image, root / "out")
             self.assertEqual(report["kind"], "amlogic-multi")
-            self.assertEqual(report["entries"][0]["tokens"][1], "2101w")
+            self.assertEqual(report["entries"][0]["tokens"], ["sm1", "ac213", "4g"])
             self.assertEqual((root / "out/board-0.dtb").read_bytes(), fdt)
 
     def test_android_dtbo_header(self):
