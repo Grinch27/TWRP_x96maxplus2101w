@@ -1,0 +1,3 @@
+# Stock proprietary kernel, second-stage and DTBO are intentionally not
+# committed into the source repository. Generate from the pinned ROM Release
+# via the offline inspection workflow, then place kernel/second/dtbo.img here.
