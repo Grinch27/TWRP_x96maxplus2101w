@@ -85,6 +85,12 @@ sync_sources() {
     cp "${BOARD_SOURCE}/build/manifests/twrp9-required.xml" \
       .repo/local_manifests/twrp9-required.xml
     "${WORK_ROOT}/bin/repo" sync -j3 -c --no-tags --fail-fast
+    # Recovery-only: remove three foreign handset HAL edges from the Omni
+    # system_server module. Leave their Java sources and all real recovery
+    # dependencies unchanged. Any attempted system_server build still fails
+    # normally on unresolved imports; never create dummy HAL modules.
+    python3 "${BOARD_SOURCE}/scripts/prune_nonrecovery_hal.py" \
+      frameworks/base/services/core/Android.bp
     test -f external/skia/Android.bp
     grep -Eq 'name: *"skia_deps"' external/skia/Android.bp
     test -f prebuilts/tools/common/m2/Android.bp
