@@ -34,7 +34,7 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s tests -p 'test_inspect_amlogic.py' -v
           python3 -m unittest discover -s tests -p 'test_analyze_android_boot.py' -v
-          python3 -m py_compile scripts/inspect_amlogic.py scripts/analyze_android_boot.py
+          python3 -m py_compile scripts/inspect_amlogic.py scripts/analyze_android_boot.py scripts/prepare_twrp_prebuilt.py
 
   inspect:
     name: Inspect 2024 factory package (read only)
@@ -79,6 +79,20 @@ jobs:
                   print(f"FIRMWARE ITEM {item['index']}: {item['main']}/{item['sub']} size={item['length']} type={item['type']}")
               out.write("\nNot proof of device boot, recovery ABI, partition mountability, or FBE.\n")
           PY
+      - name: Prepare stock-derived TWRP kernel, second and DTBO inputs
+        run: |
+          set -euo pipefail
+          python3 scripts/prepare_twrp_prebuilt.py \
+            "${RUNNER_TEMP}/inspection" "${RUNNER_TEMP}/twrp-prebuilt" \
+            --inspection-run "${GITHUB_RUN_ID}"
+      - name: Retain validated TWRP source prebuilts (not a flash image)
+        uses: actions/upload-artifact@main
+        with:
+          name: x96-2101w-twrp-prebuilt-${{ github.run_id }}
+          path: ${{ runner.temp }}/twrp-prebuilt/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
       - name: Keep limited extracted evidence for device-tree investigation
         uses: actions/upload-artifact@main
         with:
