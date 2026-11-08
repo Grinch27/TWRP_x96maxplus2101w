@@ -1,0 +1,60 @@
+# Requirements: validate the 2101W device tree without downloading full ROM.
+# Ambiguities: recovery partition size and real device ABI support are pending.
+# Research: next add pinned TWRP/Omni native build and non-release acceptance.
+# Optimization: run fast source tests before any costly Android checkout.
+# Risks: syntax checks are not Android compilation or flash safety evidence.
+# Verification: Python unit tests, source inspection, no external writes/releases.
+name: X96 2101W Device Tree Checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/device_tree_verify.yml'
+      - 'BoardConfig.mk'
+      - 'Android.mk'
+      - 'AndroidProducts.mk'
+      - 'omni_x96maxplus2101w.mk'
+      - 'recovery/**'
+      - 'prebuilt/.gitkeep'
+      - 'scripts/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runner-image:
+    name: Resolve hosted runner
+    runs-on: ubuntu-latest
+    outputs:
+      RUNNER_IMAGE: ${{ steps.resolve.outputs.RUNNER_IMAGE }}
+    steps:
+      - name: Resolve runner image
+        id: resolve
+        uses: Grinch27/github-actions/.github/actions/resolve-runner-image@main
+
+  validate:
+    name: Verify source tree, ROM parsers and partition safety
+    needs: runner-image
+    runs-on: ${{ needs.runner-image.outputs.RUNNER_IMAGE }}
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Offline source and parser tests
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m py_compile \
+            scripts/stock_rom.py \
+            scripts/inspect_amlogic.py \
+            scripts/analyze_android_boot.py \
+            scripts/prepare_twrp_prebuilt.py
+      - name: Record verification boundary
+        run: |
+          printf '%s\n' \
+            'Offline device-tree checks passed; **no TWRP compilation or device flash** was performed.' \
+            'Recovery capacity, external storage, IR/HDMI support and AVB/decryption remain unverified.' \
+            >> "${GITHUB_STEP_SUMMARY}"
