@@ -71,3 +71,20 @@
 | [#42476519937](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42476519937) | 第五次非发布真实构建入口 | 以 GitHub 最新的最终运行状态为准；不可在执行中声称成功 |
 
 根因修复原则：精确诊断后在脚本或设备树内进行最小修复，`external/skia` 通过 `refs/tags/android-9.0.0_r47` 真实源码补齐，不开启 `ALLOW_MISSING_DEPENDENCIES`，不伪造 C++ / Soong 模块。
+
+## 2026-11-08 后续依赖闭包与风险分层
+
+| 实际 Run | 已确认结果 |
+| --- | --- |
+| [#42476519937](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42476519937) | 实际完成含 Skia 的源码同步，Soong 报错涉及 `okhttp`、`junit`、`sonivox`、`metalava` 等模块，均可与原版 `remove-minimal.xml` 对应 |
+| [#42482093718](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42482093718) | 中间版本的 18 项增量同步完成，但漏列 `external/skia`，源码存在性检查失败；新版已补回 |
+| [#42482163462](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42482163462) | 完整同步 19 项 AOSP 9 增量，Soong 下一层缺失基础多媒体、图形库和 Omni Framework 专属 OnePlus/Motorola HAL Java 接口 |
+| [#42483452119](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42483452119) | 采用 32 项精确列出的 AOSP 9 增量，实际结论必须以该 Run 的最终状态、日志和后续静态验收为准 |
+
+现在的源码修复入口是 [`build/manifests/twrp9-required.xml`](../build/manifests/twrp9-required.xml)，所有项目使用 `android-9.0.0_r47` 标签；[回归测试](../tests/test_native_manifest.py)检查真实项目名、去重和默认分组。
+
+Omni 的 `services.core.unboosted` 在 `frameworks/base/services/core/Android.bp` 中依赖 **OnePlus fingerprint/display 和 Motorola health** 模块。对 2101W 的独立 TWRP Recovery 而言，这些 Android 系统服务不是 Recovery 的必需组件，且属于其他手机硬件。当前仅在临时、非发布 Native 工作目录内通过 [`prune_nonrecovery_hal.py`](../scripts/prune_nonrecovery_hal.py) 精确删除这三条 **非目标系统服务的 Soong 静态依赖**，不修改 Java 源码、不引入假 HAL，也不修改上游 GitHub 仓库。严格检验出现次数，发生上游源文件变化即失败。该处理不代表完整 Omni Android 系统能够构建，不应用于 LineageOS 或正式 Android 系统构建。
+
+其余缺失库通过恢复**实际存在的 AOSP 9 项目**处理：包括 `external/libvpx`、`libopus`、`sqlite`、`libjpeg-turbo`、`harfbuzz_ng`、`pdfium`、`frameworks/minikin`、`prebuilts/gradle-plugin`、`development`。后续应审查这些项目的实际依赖是否仍能维持 Recovery 构建的最小化。
+
+**重要:** 即使 Soong/Kati/Native 完全成功，也必须额外验证 Recovery ramdisk 的真实 TWRP 可执行文件、fstab、USB 输入事件路径和原厂内核/DTBO 字节一致性。没有这些证据时不得把镜像标记为可实机刷写。
