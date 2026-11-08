@@ -94,4 +94,6 @@
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/system/bt" path="system/bt" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/frameworks/ml" path="frameworks/ml" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
 </manifest>

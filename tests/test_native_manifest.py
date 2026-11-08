@@ -31,6 +31,7 @@ REQUIRED = {
     "external/jsr330", "external/doclava", "external/libexif",
     "external/piex", "test/vts",
     "external/antlr", "external/webp", "system/bt",
+    "frameworks/ml",
 }
 
 
