@@ -8,7 +8,7 @@ This repository initially focuses on collecting factory **Amlogic USB Burning To
 
 | Entry | Device | Classification | Source | Archive status |
 | --- | --- | --- | --- | --- |
-| X96Max_Plus_2101W_20240508-1103.7z | 2101W | Factory/Stock candidate | [slimBOXtv official-firmware section](https://slimboxtv.ru/x96max-plus/) / [Yandex](https://disk.yandex.ru/d/EiPGAs73ml2wLQ) | Source identified; download and unpack unverified |
+| X96Max_Plus_2101W_20240508-1103.7z | 2101W | Factory/Stock candidate | [slimBOXtv official-firmware section](https://slimboxtv.ru/x96max-plus/) / [Yandex](https://disk.yandex.ru/d/EiPGAs73ml2wLQ) | [Released and statically validated (2024 original + UBT .img)](https://github.com/Grinch27/TWRP_x96maxplus2101w/releases/tag/firmware-2101w-stock-20240508-42466511950-1) |
 | X96max_plus_2101w_20220525-1404 | 2101W | Factory/Stock candidate | [4PDA firmware index](https://4pda.to/forum/index.php?showtopic=1013103&st=13260) | Exact public download link unverified |
 | X96MaxPlus_2101_20220525-1725 | **2101, not 2101W** | Other-revision factory image | [4PDA](https://4pda.to/forum/index.php?showtopic=1013103&st=10120) | Excluded from 2101W Stock publication |
 | sbx_x96max_plus_2101w_{aosp,atv}_9_20.zip | 2101W | **Third-party slimBOXtv**, not factory stock | [Armbian issue #929](https://github.com/ophub/amlogic-s9xxx-armbian/issues/929) / [Yandex](https://disk.yandex.ru/d/hGbDgwMQjO8BDQ) | Separate optional category; not marked Stock |
@@ -20,3 +20,10 @@ The default push job archives **only the known-source 2024 2101W factory candida
 **Upstream attribution and redistribution condition:** [slimBOXtv X96Max Plus source post](https://slimboxtv.ru/x96max-plus/) requires permission or a link to its source post for third-party redistribution. Preserve this link in any mirror and obey applicable upstream rights. Firmware copyright and permission from the original hardware vendor are not established by this repository.
 
 This is a firmware-research/archive project. TWRP itself is not yet implemented or validated.
+
+## Verified Release
+
+- **2024 2101W factory candidate:** [firmware-2101w-stock-20240508-42466511950-1](https://github.com/Grinch27/TWRP_x96maxplus2101w/releases/tag/firmware-2101w-stock-20240508-42466511950-1), archived by [successful Actions run #42466511950](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42466511950).
+- Contents: original `X96Max_Plus_2101W_20240508-1103.7z` (816,338,224 bytes), extracted `amlogic-factory-package.img` (1,689,100,628 bytes), `original-rom-manifest.json`.
+- **Validation limit:** archive integrity and Amlogic package static header passed; actual USB Burning Tool import, device boot and 2101W board compatibility were not tested.
+- **2022 2101W:** download URL remains unresolved, and no Release is available. Never confuse this with 2101 firmware or SlimBOXtv custom images.
