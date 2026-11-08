@@ -59,3 +59,15 @@
 
 - 原厂实际 eMMC 分区容量、真实 U-Boot Multi-DTB 选择、USB 键鼠／HDMI、ADB/MTP、挂载点及加密功能均未验收。
 - 即使 Native 编译和静态验收成功，也不证明 Recovery 能启动或支持备份恢复；**下一次实机测试需要额外 HIGH-risk Approval Gate**。
+
+## 实际 Native 运行记录（均非 Release）
+
+| Run | 已验证达到的阶段 | 真实结果 |
+| --- | --- | --- |
+| [#42475156248](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42475156248) | 完整 ROM 输入、Python2、Java8、repo sync 均通过 | 旧版 Android 9 `envsetup.sh` 与 `set -u` 冲突；已修复严格模式作用域 |
+| [#42475580066](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42475580066) | `envsetup` 能执行，产品配置检查开始 | `TARGET_COPY_OUT_VENDOR` 缺失；已从上游 Amlogic 9.0 设备树验证需要 `vendor` |
+| [#42475902594](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42475902594) | `lunch` 成功、Soong bootstrap 执行至 76/76 | `hwui_defaults` 引用缺失的 `skia_deps`，来自 minimal manifest 中未同步的 `external/skia` |
+| [#42476327374](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42476327374) | ROM 提取、Python2、环境准备 | 局部 Manifest 试图移除已被 groups 过滤的 Skia 项，`repo sync` 拒绝；已删除无效 `remove-project` |
+| [#42476519937](https://github.com/Grinch27/TWRP_x96maxplus2101w/actions/runs/42476519937) | 第五次非发布真实构建入口 | 以 GitHub 最新的最终运行状态为准；不可在执行中声称成功 |
+
+根因修复原则：精确诊断后在脚本或设备树内进行最小修复，`external/skia` 通过 `refs/tags/android-9.0.0_r47` 真实源码补齐，不开启 `ALLOW_MISSING_DEPENDENCIES`，不伪造 C++ / Soong 模块。
