@@ -26,6 +26,8 @@ REQUIRED = {
     "external/sqlite", "external/libjpeg-turbo", "external/harfbuzz_ng",
     "external/pdfium", "frameworks/minikin", "prebuilts/gradle-plugin",
     "development",
+    "external/libyuv", "external/libavc", "external/jsilver",
+    "external/zopfli",
 }
 
 
