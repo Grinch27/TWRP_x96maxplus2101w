@@ -1,0 +1,131 @@
+# Requirements: archive authentic, fully downloaded USB Burning Tool images to unique Releases.
+# Ambiguities: 2022 2101W source URLs remain unverified; similarly named 2101 is another board.
+# Research: acquire vendor-original 2022 links and test output in USB Burning Tool.
+# Optimization: resumable Yandex HTTP Range transfers and 1.9 GB Release asset splitting.
+# Risks: provider availability, upstream redistribution rights, wrong-board firmware,
+#        limited runner storage/time, unverified device compatibility.
+# Verification: offline tests, provider metadata, archive CRC, Amlogic image header,
+#               completed draft upload before public Release; no flashing is performed.
+name: X96 MAX+ 2101W Stock ROM Archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/stock_rom.yml'
+  workflow_dispatch:
+    inputs:
+      firmware:
+        description: 'Firmware source; unresolved 2022 items fail closed'
+        required: true
+        type: choice
+        default: '2101w-stock-20240508'
+        options:
+          - 2101w-stock-20240508
+          - 2101w-stock-20220525
+          - 2101-stock-20220525
+          - 2101w-slimbox-aosp
+          - 2101w-slimbox-atv
+      publish:
+        description: 'Upload verified archive and extracted image to a public Release'
+        type: boolean
+        default: true
+
+run-name: X96 2101W firmware - ${{ inputs.firmware || '2101w-stock-20240508' }} - ${{ github.event_name }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: x96-stock-${{ inputs.firmware || '2101w-stock-20240508' }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ROM_ENTRY: ${{ inputs.firmware || '2101w-stock-20240508' }}
+  GH_PROMPT_DISABLED: '1'
+
+jobs:
+  runner-image:
+    name: Resolve hosted runner and test local source policies
+    runs-on: ubuntu-latest
+    outputs:
+      RUNNER_IMAGE: ${{ steps.resolve.outputs.RUNNER_IMAGE }}
+    steps:
+      - name: Resolve runner image
+        id: resolve
+        uses: Grinch27/github-actions/.github/actions/resolve-runner-image@main
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Validate source and archive code offline
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_stock_rom*.py' -v
+          python3 -m py_compile scripts/stock_rom.py
+
+  download-and-release:
+    name: Preserve and publish validated firmware
+    needs: runner-image
+    runs-on: ${{ needs.runner-image.outputs.RUNNER_IMAGE }}
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          persist-credentials: false
+      - name: Set up isolated workspace
+        run: |
+          set -euo pipefail
+          printf 'ROM_DIR=%s\n' "${RUNNER_TEMP}/x96-2101w-stock-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
+      - name: Install 7z extraction support
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -euo pipefail
+          if ! command -v 7z >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends p7zip-full
+          fi
+      - name: Resolve provider, fetch archive, verify image and prepare assets
+        run: |
+          set -euo pipefail
+          python3 scripts/stock_rom.py "${ROM_ENTRY}" "${ROM_DIR}"
+          printf 'Validated upstream image: %s\n' "${ROM_ENTRY}" >> "${GITHUB_STEP_SUMMARY}"
+      - name: Publish new verified release (draft first)
+        if: github.event_name == 'push' || inputs.publish == true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="firmware-${ROM_ENTRY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          title="${ROM_ENTRY} (upstream firmware archive)"
+          gh release create "${tag}" \
+            --target "${GITHUB_SHA}" \
+            --title "${title}" \
+            --notes-file "${ROM_DIR}/release-notes.md" \
+            --draft --latest=false
+          gh release upload "${tag}" "${ROM_DIR}/assets/"*
+          gh release edit "${tag}" --draft=false --latest=false
+          printf '[Open completed Release](https://github.com/%s/releases/tag/%s)\n' \
+            "${GH_REPO}" "${tag}" >> "${GITHUB_STEP_SUMMARY}"
+      - name: Record dry-run provenance
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == false
+        run: |
+          set -euo pipefail
+          printf 'Download and offline package checks completed. No Release was requested.\n' >> "${GITHUB_STEP_SUMMARY}"
+          python3 - "${ROM_DIR}" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          report = json.loads((Path(sys.argv[1]) / "assets" / "original-rom-manifest.json").read_text())
+          print("Verified file:", report["upstream_file"])
+          print("Package:", report["package"]["format"], report["package"]["image_size"])
+          PY
