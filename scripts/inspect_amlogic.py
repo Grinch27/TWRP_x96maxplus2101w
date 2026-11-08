@@ -28,7 +28,7 @@ ITEM_FORMATS = {
     1: struct.Struct("<IIQQQ32s32s32s"),
     2: struct.Struct("<IIQQQ256s256s32s"),
 }
-ALLOW_EXTRACT = {"boot", "recovery", "dtb", "dtbo", "vendor_boot", "vbmeta"}
+ALLOW_EXTRACT = {"boot", "recovery", "dtb", "dtbo", "vendor_boot", "vbmeta", "_aml_dtb", "meson1"}
 MAX_SELECTED = 128 * 1024 * 1024
 MAX_ITEMS = 1024
 
@@ -114,7 +114,9 @@ def android_boot_probe(header: bytes) -> dict:
             "note": "Header field 40 is ambiguous between legacy dt_size and header_version",
         }
     if header.startswith(bytes.fromhex("d7b7ab1e")):
-        return {"format": "android_sparse_ext4_candidate"}
+        return {"format": "android_dtbo_table"}
+    if header.startswith(b"AML_"):
+        return {"format": "amlogic_multi_dtb_candidate"}
     if header.startswith(b"\xd0\x0d\xfe\xed"):
         return {"format": "flattened_device_tree"}
     return {"format": "unclassified", "first_eight_bytes_hex": header[:8].hex()}
@@ -128,7 +130,7 @@ def inspect(image: Path, output: Path) -> dict:
     with image.open("rb") as source:
         for item in records:
             name = item["sub"].lower()
-            if name not in allowed or item["main"].upper() not in ("PARTITION", "IMAGE"):
+            if name not in allowed or item["main"].upper() not in ("PARTITION", "IMAGE", "DTB"):
                 continue
             if allowed[name] is not None:
                 raise ValueError(f"Multiple candidate {name} images")
