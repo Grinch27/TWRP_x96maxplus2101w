@@ -35,6 +35,7 @@ class TreeTests(unittest.TestCase):
         self.assertEqual(product["PRODUCT_NAME"], "omni_x96maxplus2101w")
         self.assertNotIn("u212", product["PRODUCT_DEVICE"])
         self.assertEqual(board["TARGET_ARCH"], "arm")
+        self.assertEqual(board["TARGET_COPY_OUT_VENDOR"], "vendor")
 
     def test_original_recovery_header_geometry(self):
         board = settings("BoardConfig.mk")
