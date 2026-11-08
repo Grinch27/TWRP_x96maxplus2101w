@@ -3,7 +3,7 @@
 # Research: extract fstab, boot header and DTB before choosing BoardConfig flags.
 # Optimization: download once, parse table, extract only <=128 MiB allowlist.
 # Risks: corrupt firmware tables, proprietary bootloaders, unverified kernel ABI.
-# Diagnostics: permit exact USB aliases only; reject partial item overlap.
+# Diagnostics: parse original _aml_dtb and meson1 in addition to Android boot/recovery.
 # Verification: synthetic v1/v2 tests, real header/index extraction, human review.
 # This workflow never flashes, reuploads full stock or modifies stock releases.
 name: X96 2101W Stock ROM Offline Inspection
