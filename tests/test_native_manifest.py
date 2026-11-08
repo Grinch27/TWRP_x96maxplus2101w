@@ -21,6 +21,11 @@ REQUIRED = {
     "external/libtextclassifier", "external/libgsm", "external/guava",
     "external/jsoncpp", "external/tremolo", "prebuilts/tools",
     "external/hamcrest",
+    "external/libvpx", "external/jacoco", "external/libopus",
+    "external/libhevc", "external/jsr305", "external/giflib",
+    "external/sqlite", "external/libjpeg-turbo", "external/harfbuzz_ng",
+    "external/pdfium", "frameworks/minikin", "prebuilts/gradle-plugin",
+    "development",
 }
 
 
