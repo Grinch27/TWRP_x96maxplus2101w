@@ -35,6 +35,7 @@ REQUIRED = {
     "external/libdivsufsort",
     "external/fonttools",
     "external/flatbuffers", "external/gemmlowp",
+    "external/fdlibm",
 }
 
 

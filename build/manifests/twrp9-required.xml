@@ -104,4 +104,6 @@
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
   <project name="platform/external/gemmlowp" path="external/gemmlowp" remote="aosp"
            revision="refs/tags/android-9.0.0_r47" groups="default"/>
+  <project name="platform/external/fdlibm" path="external/fdlibm" remote="aosp"
+           revision="refs/tags/android-9.0.0_r47" groups="default"/>
 </manifest>
